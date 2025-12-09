@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroPlay CL - Tienda de Juegos Retros</title>
+    <style>
+        :root {
+            --color-primary: #ff006e;
+            --color-secondary: #00d9ff;
+            --color-accent: #ffbe0b;
+            --color-bg: #0a0e27;
+            --color-surface: #1a1f3a;
+            --color-text: #ffffff;
+            --color-text-dark: #cccccc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            z-index: 1;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 5px solid var(--color-accent);
+            box-shadow: 0 4px 10px rgba(255, 0, 110, 0.5);
+        }
+
+        header h1 {
+            font-size: 48px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            letter-spacing: 3px;
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 10px var(--color-secondary); }
+            50% { text-shadow: 0 0 20px var(--color-primary); }
+        }
+
+        .tagline {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 2px;
+        }
+
+        nav {
+            background: var(--color-surface);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--color-primary);
+        }
+
+        .search-bar {
+            flex: 1;
+            margin: 0 20px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid var(--color-accent);
+            background: rgba(255, 190, 11, 0.1);
+            color: var(--color-text);
+            font-family: 'Courier New', monospace;
+        }
+
+        .search-bar input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .cart-icon {
+            font-size: 24px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .cart-icon:hover {
+            color: var(--color-accent);
+            text-shadow: 0 0 10px var(--color-accent);
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--color-primary);
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero {
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+            padding: 40px;
+            border: 4px dashed var(--color-accent);
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '▬ ▬ ▬ ▬ ▬';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            opacity: 0.5;
+        }
+
+        .hero h2 {
+            font-size: 36px;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .cta-btn {
+            background: var(--color-accent);
+            color: #000;
+            padding: 12px 30px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .cta-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px var(--color-accent);
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .product-card {
+            background: var(--color-surface);
+            border: 3px solid var(--color-primary);
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 5px 5px 0 var(--color-secondary);
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 8px 8px 0 var(--color-accent);
+            border-color: var(--color-secondary);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 150px;
+            background: linear-gradient(135deg, rgba(255, 0, 110, 0.1), rgba(0, 217, 255, 0.1));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            margin-bottom: 10px;
+            border: 2px dashed var(--color-accent);
+        }
+
+        .product-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--color-accent);
+            letter-spacing: 1px;
+        }
+
+        .product-price {
+            font-size: 20px;
+            color: var(--color-secondary);
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .product-description {
+            font-size: 12px;
+            color: var(--color-text-dark);
+            margin-bottom: 10px;
+        }
+
+        .add-to-cart-btn {
+            width: 100%;
+            padding: 8px;
+            background: var(--color-primary);
+            border: none;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Courier New', monospace;
+        }
+
+        .add-to-cart-btn:hover {
+            background: var(--color-secondary);
+            color: #000;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        .modal-content {
+            background: var(--color-surface);
+            margin: 50px auto;
+            padding: 20px;
+            border: 4px solid var(--color-accent);
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 0 30px var(--color-primary);
+        }
+
+        .close {
+            color: var(--color-accent);
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: var(--color-primary);
+        }
+
+        .cart-item {
+            background: var(--color-bg);
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid var(--color-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .remove-btn {
+            background: var(--color-primary);
+            border: none;
+            color: white;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .cart-total {
+            background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+            padding: 15px;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 18px;
+            border: 2px dashed var(--color-accent);
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--color-accent);
+            border: none;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .checkout-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--color-accent);
+        }
+
+        .empty-cart {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--color-text-dark);
+        }
+
+        .categories {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 2px solid var(--color-secondary);
+            color: var(--color-secondary);
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .category-btn:hover,
+        .category-btn.active {
+            background: var(--color-secondary);
+            color: #000;
+        }
+
+        footer {
+            background: var(--color-surface);
+            padding: 20px;
+            text-align: center;
+            border-top: 3px solid var(--color-primary);
+            margin-top: 40px;
+            color: var(--color-text-dark);
+        }
+
+        .pixel-divider {
+            height: 3px;
+            background: repeating-linear-gradient(90deg, var(--color-primary) 0px, var(--color-primary) 10px, transparent 10px, transparent 20px);
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 28px;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .search-bar {
+                margin: 10px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="scanlines"></div>
+
+    <header>
+        <h1>🎮 RETROPLAY CL 🎮</h1>
+        <p class="tagline">>> CONSOLAS & JUEGOS RETRO - ENVÍOS A TODO CHILE <<</p>
+    </header>
+
+    <nav>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="🔍 Buscar juego...">
+        </div>
+        <div class="cart-icon" onclick="toggleCart()">
+            🛒
+            <span class="cart-count" id="cartCount">0</span>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="hero">
+            <h2>¡OFERTA ESPECIAL DICIEMBRE!</h2>
+            <p>Consolas y juegos clásicos con descuento hasta 30%</p>
+            <button class="cta-btn" onclick="scrollToProducts()">VER CATÁLOGO</button>
+        </div>
+
+        <div class="pixel-divider"></div>
+
+        <h2 style="margin-bottom: 20px; color: var(--color-accent); letter-spacing: 2px;">CATEGORÍAS</h2>
+        <div class="categories">
+            <button class="category-btn active" onclick="filterProducts('all')">TODOS</button>
+            <button class="category-btn" onclick="filterProducts('consolas')">CONSOLAS</button>
+            <button class="category-btn" onclick="filterProducts('juegos')">JUEGOS</button>
+            <button class="category-btn" onclick="filterProducts('accesorios')">ACCESORIOS</button>
+        </div>
+
+        <div class="pixel-divider"></div>
+
+        <div class="products-grid" id="productsGrid"></div>
+    </div>
+
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="toggleCart()">&times;</span>
+            <h2 style="margin-bottom: 20px; color: var(--color-accent);">🛒 MI CARRITO</h2>
+            <div id="cartItems"></div>
+            <div id="emptyCart" class="empty-cart">
+                <p>Tu carrito está vacío</p>
+            </div>
+            <div id="cartFooter" style="display: none;">
+                <div class="cart-total">
+                    TOTAL: $<span id="totalPrice">0</span>
+                </div>
+                <button class="checkout-btn" onclick="checkout()">COMPRAR AHORA</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 RetroPlay CL - Dropshipping de Juegos Clásicos</p>
+        <p>Envíos a todo Chile | Garantía de Calidad | Atención 24/7</p>
+        <p style="margin-top: 10px; font-size: 12px;">📧 contacto@retroplay.cl | 🔗 retroplay.cl | 💬 @retro.playcl</p>
+    </footer>
+
+    <script>
+        const products = [
+            {id: 1, name: 'Super Nintendo Clásica', price: 34990, category: 'consolas', emoji: '🎮', description: '621 juegos incluidos'},
+            {id: 2, name: 'Nintendo 64 Retro', price: 29990, category: 'consolas', emoji: '🕹️', description: '300+ juegos clásicos'},
+            {id: 3, name: 'Game Boy Portátil', price: 19990, category: 'consolas', emoji: '📱', description: 'Pantalla LCD moderna'},
+            {id: 4, name: 'Mario Bros Ultimate', price: 4990, category: 'juegos', emoji: '🍄', description: 'Clásico incomparable'},
+            {id: 5, name: 'Zelda: Link\'s Adventure', price: 5490, category: 'juegos', emoji: '⚔️', description: 'Aventura épica'},
+            {id: 6, name: 'Donkey Kong Country', price: 4490, category: 'juegos', emoji: '🦍', description: 'Acción a raudales'},
+            {id: 7, name: 'Control Inalámbrico', price: 8990, category: 'accesorios', emoji: '🎯', description: '2.4GHz profesional'},
+            {id: 8, name: 'Cable HDMI Gaming', price: 3490, category: 'accesorios', emoji: '📺', description: '1080p HD compatible'},
+            {id: 9, name: 'Funda Protectora Premium', price: 6490, category: 'accesorios', emoji: '🛡️', description: 'Neopreno de calidad'},
+            {id: 10, name: 'Sonic the Hedgehog', price: 4990, category: 'juegos', emoji: '⚡', description: 'Velocidad a tope'},
+            {id: 11, name: 'Mega Man Collection', price: 5990, category: 'juegos', emoji: '🤖', description: '10 juegos incluidos'},
+            {id: 12, name: 'Castlevania Clásico', price: 5490, category: 'juegos', emoji: '🧛', description: 'Acción medieval'}
+        ];
+
+        let cart = [];
+        let currentFilter = 'all';
+
+        function displayProducts(filter = 'all') {
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+            const filtered = filter === 'all' ? products : products.filter(p => p.category === filter);
+            filtered.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-image">${product.emoji}</div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">$${product.price.toLocaleString()}</div>
+                    <div class="product-description">${product.description}</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(${product.id})">AGREGAR 🛒</button>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
+            if (existingItem) {
+                existingItem.quantity++;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            updateCart();
+            alert(`✅ "${product.name}" añadido al carrito!`);
+        }
+
+        function updateCart() {
+            document.getElementById('cartCount').textContent = cart.length;
+            displayCartItems();
+        }
+
+        function displayCartItems() {
+            const cartItems = document.getElementById('cartItems');
+            const emptyCart = document.getElementById('emptyCart');
+            const cartFooter = document.getElementById('cartFooter');
+            cartItems.innerHTML = '';
+            if (cart.length === 0) {
+                emptyCart.style.display = 'block';
+                cartFooter.style.display = 'none';
+                return;
+            }
+            emptyCart.style.display = 'none';
+            cartFooter.style.display = 'block';
+            let total = 0;
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                cartItem.innerHTML = `
+                    <div>
+                        <strong>${item.name}</strong><br>
+                        Qty: ${item.quantity} x $${item.price.toLocaleString()}
+                    </div>
+                    <button class="remove-btn" onclick="removeFromCart(${item.id})">QUITAR</button>
+                `;
+                cartItems.appendChild(cartItem);
+            });
+            document.getElementById('totalPrice').textContent = total.toLocaleString();
+        }
+
+        function removeFromCart(productId) {
+            cart = cart.filter(item => item.id !== productId);
+            updateCart();
+        }
+
+        function toggleCart() {
+            const modal = document.getElementById('cartModal');
+            modal.style.display = modal.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function filterProducts(category) {
+            currentFilter = category;
+            displayProducts(category);
+            document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('Tu carrito está vacío');
+                return;
+            }
+            let message = '🎮 PEDIDO RETROPLAY CL\n\n';
+            let total = 0;
+            cart.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                total += itemTotal;
+                message += `${item.name} x${item.quantity} = $${itemTotal.toLocaleString()}\n`;
+            });
+            message += `\n💰 TOTAL: $${total.toLocaleString()}\n\nIngresa tu nombre y dirección para confirmar la compra.`;
+            const phone = '56912345678';
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/${phone}?text=${encodedMessage}`, '_blank');
+            alert('✅ Abriéndose WhatsApp para confirmar tu compra!');
+            cart = [];
+            updateCart();
+            toggleCart();
+        }
+
+        function scrollToProducts() {
+            document.getElementById('productsGrid').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        document.getElementById('searchInput').addEventListener('keyup', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = '';
+            const filtered = products.filter(p => p.name.toLowerCase().includes(searchTerm) || p.description.toLowerCase().includes(searchTerm));
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--color-text-dark);">No se encontraron productos</p>';
+                return;
+            }
+            filtered.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-image">${product.emoji}</div>
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">$${product.price.toLocaleString()}</div>
+                    <div class="product-description">${product.description}</div>
+                    <button class="add-to-cart-btn" onclick="addToCart(${product.id})">AGREGAR 🛒</button>
+                `;
+                grid.appendChild(card);
+            });
+        });
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('cartModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        displayProducts();
+    </script>
+</body>
+</html>
